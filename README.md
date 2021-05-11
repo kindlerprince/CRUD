@@ -28,5 +28,5 @@ go build
 * Forgot  
 `curl -X PUT -d '{ "password":"kumar1","email":"prince.kumar@email.com"}' http://localhost:8200/forgot`  
 * Delete  
-`curl -X DELETE -d '{ "email":"prince.kumar@email.com"}' http://localhost:8200/user`  
+`curl -X DELETE -d '{ "email":"prince.kumar@email.com"}' http://localhost:8200/delete`  
 

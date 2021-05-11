@@ -41,7 +41,7 @@ func dbConnect() error {
 			fmt.Printf("Error in pinging the database : [%s] retrying in %d seconds ...\n", err.Error(), t)
 			time.Sleep(time.Duration(t) * time.Second)
 		} else {
-			fmt.Printf("Database connection established...")
+			fmt.Println("Database connection established")
 			break
 		}
 	}

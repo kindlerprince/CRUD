@@ -60,7 +60,7 @@ func registrationHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in reading body : %s", err.Error())
 			response.Message = "Error in reading data"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		defer r.Body.Close()
@@ -69,14 +69,14 @@ func registrationHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in unmarshalling body : %s", err.Error())
 			response.Message = "Error in parsing JSON"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		rows, err := createStmt.Query(reg.Name, reg.Email, reg.Password, reg.Address)
 		if err != nil {
 			fmt.Printf("Error in creating user : [%s]\n", err.Error())
 			response.Message = "Error creating user"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		defer rows.Close()
@@ -94,7 +94,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in reading body : %s", err.Error())
 			response.Message = "Error in reading data"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		defer r.Body.Close()
@@ -103,7 +103,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in unmarshalling body : %s", err.Error())
 			response.Message = "Error in parsing JSON"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		rows := readStmt.QueryRow(log.Email, log.Password)
@@ -112,7 +112,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if email == "" || passowrd == "" {
 			fmt.Printf("Error in getting user : [%s]\n", err.Error())
 			response.Message = "Error getting user"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 		}
 		response.Message = "User exists Successful"
 		fmt.Printf("Login Success for user %s\n", log.Email)
@@ -128,7 +128,7 @@ func forgotHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in reading body : %s", err.Error())
 			response.Message = "Error in reading data"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		defer r.Body.Close()
@@ -137,7 +137,7 @@ func forgotHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in unmarshalling body : %s", err.Error())
 			response.Message = "Error in parsing JSON"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		var email string
@@ -145,7 +145,7 @@ func forgotHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil && email != "" {
 			fmt.Printf("Error in creating user : [%s]\n", err.Error())
 			response.Message = "Error creating user"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 		}
 
 		response.Message = "Registration Successful"
@@ -162,7 +162,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in reading body : %s", err.Error())
 			response.Message = "Error in reading data"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		defer r.Body.Close()
@@ -171,14 +171,14 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("Error in unmarshalling body : %s", err.Error())
 			response.Message = "Error in parsing JSON"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 			return
 		}
 		_, err = deleteStmt.Exec(forg.Email)
 		if err != nil {
 			fmt.Printf("Error in deleting user : [%s]\n", err.Error())
 			response.Message = "Error deleting user"
-			writeSuccessMessage(w, r, response)
+			writeErrorMessage(w, r, http.StatusBadRequest, response)
 		}
 		response.Message = "Deleting Successful"
 		fmt.Printf("Login Success for user %s\n	", forg.Email)
@@ -197,6 +197,21 @@ func writeSuccessMessage(w http.ResponseWriter, r *http.Request, data interface{
 	)
 	w.WriteHeader(http.StatusOK)
 	body, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(body)
+}
+func writeErrorMessage(w http.ResponseWriter, r *http.Request, code int, errresp interface{}) {
+	fmt.Printf(
+		"%s %s %v",
+		r.Method,
+		r.RequestURI,
+		errresp,
+	)
+	w.WriteHeader(code)
+	body, err := json.Marshal(errresp)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
